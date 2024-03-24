@@ -31,9 +31,18 @@ from llama_index.core.bridge.pydantic import Field
 from llama_index.core.callbacks import CallbackManager
 from llama_index.llms.openai.base import OpenAI, Tokenizer
 from transformers import AutoTokenizer
+from llama_index.llms.openai.utils import create_retry_decorator
 
 DEFAULT_SOLAR_API_BASE = "https://api.upstage.ai/v1/solar"
 DEFAULT_SOLAR_MODEL = "solar-1-mini-chat"
+
+llm_retry_decorator = create_retry_decorator(
+    max_retries=6,
+    random_exponential=True,
+    stop_after_delay_seconds=60,
+    min_seconds=1,
+    max_seconds=20,
+)
 
 
 class Solar(OpenAI):

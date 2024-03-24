@@ -1,12 +1,4 @@
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Optional,
-    Sequence,
-    Union,
-    Tuple,
-)
+from typing import Any, Callable, Dict, Optional, Sequence, Union, Tuple, List
 from llama_index.legacy.llms.generic_utils import get_from_param_or_env
 from llama_index.core.base.llms.types import (
     ChatMessage,
@@ -32,6 +24,8 @@ from llama_index.core.callbacks import CallbackManager
 from llama_index.llms.openai.base import OpenAI, Tokenizer
 from transformers import AutoTokenizer
 from llama_index.llms.openai.utils import create_retry_decorator
+from llama_index.core.chat_engine.types import AgentChatResponse
+from llama_index.core.tools.types import BaseTool
 
 DEFAULT_SOLAR_API_BASE = "https://api.upstage.ai/v1/solar"
 DEFAULT_SOLAR_MODEL = "solar-1-mini-chat"

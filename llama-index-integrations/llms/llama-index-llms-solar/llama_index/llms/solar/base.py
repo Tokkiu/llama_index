@@ -218,6 +218,61 @@ class Solar(OpenAI):
 
         return await super().astream_chat(messages, **kwargs)
 
+    @llm_retry_decorator
+    def _complete(self, prompt: str, **kwargs: Any) -> CompletionResponse:
+        client = self._get_client()
+        all_kwargs = self._get_model_kwargs(**kwargs)
+        self._update_max_tokens(all_kwargs, prompt)
+
+        response = client.chat.completions.create(
+            messages=message_dicts,
+            stream=False,
+            **self._get_model_kwargs(**kwargs),
+        )
+        message = response.choices[0].message
+
+        return CompletionResponse(
+            text=message,
+            logprobs=None,
+        )
+
+    def predict_and_call(
+        self,
+        tools: List["BaseTool"],
+        user_msg: Optional[Union[str, ChatMessage]] = None,
+        chat_history: Optional[List[ChatMessage]] = None,
+        verbose: bool = False,
+        **kwargs: Any,
+    ) -> "AgentChatResponse":
+        if not self.metadata.is_function_calling_model:
+            return super().predict_and_call(
+                tools,
+                user_msg=user_msg,
+                chat_history=chat_history,
+                verbose=verbose,
+                **kwargs,
+            )
+
+        tool_specs = [tool.metadata.to_openai_tool() for tool in tools]
+        tools_by_name = {tool.metadata.name: tool for tool in tools}
+
+        if isinstance(user_msg, str):
+            user_msg = ChatMessage(role=MessageRole.USER, content=user_msg)
+
+        messages = chat_history or []
+        if user_msg:
+            messages.append(user_msg)
+
+        response = self.chat(
+            messages,
+            tools=tool_specs,
+            **kwargs,
+        )
+
+        tool_call = self._get_tool_call(response)
+
+        return self._call_tool(tool_call, tools_by_name, verbose=verbose)
+
 
 def resolve_solar_credentials(
     api_key: Optional[str] = None,
